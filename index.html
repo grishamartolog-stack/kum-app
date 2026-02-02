@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Досье Кума</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* --- СТИЛЬ ANTIGRAVITY (НЕОН + СТЕКЛО) --- */
+        :root {
+            --bg-dark: #050505;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --text-main: #ffffff;
+        }
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% -20%, #2a0038, #000);
+            color: var(--text-main);
+            font-family: -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Анимация шаров на фоне */
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; }
+        .orb-1 { top: -50px; left: -50px; width: 200px; height: 200px; background: var(--neon-pink); animation: float 10s infinite ease-in-out;}
+        .orb-2 { bottom: 10%; right: -20px; width: 150px; height: 150px; background: var(--neon-blue); animation: float 8s infinite ease-in-out reverse;}
+
+        @keyframes float { 0% { transform: translate(0,0); } 50% { transform: translate(20px, 40px); } 100% { transform: translate(0,0); } }
+
+        /* Стеклянная карточка */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        h2 { text-align: center; margin-bottom: 5px; background: linear-gradient(90deg, #fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 25px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { font-size: 12px; color: #aaa; margin-left: 10px; display: block; }
+        input, select, textarea {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff;
+            padding: 14px; border-radius: 14px; font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+
+        .btn-submit {
+            margin-top: 20px; width: 100%; padding: 16px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-pink));
+            color: white; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s;
+        }
+        .btn-submit:active { transform: scale(0.96); opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="glass-card">
+        <h2>🔒 ДОСЬЕ КУМА</h2>
+        <p class="subtitle">Заполни честно или ИИ тебя найдет</p>
+        <form id="doprosForm">
+            <div class="input-group">
+                <label>ПОЗЫВНОЙ (ИМЯ)</label>
+                <input type="text" id="full_name" placeholder="Димон" required>
+            </div>
+            <div class="input-group">
+                <label>РОЛЬ В КЛАНЕ</label>
+                <select id="role">
+                    <option value="Кум">Кум (Крестный)</option>
+                    <option value="Кума">Кума (Крестная)</option>
+                    <option value="Сочувствующий">Муж/Жена Кума</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>ЛЮБИМОЕ ТОПЛИВО</label>
+                <input type="text" id="alcohol" placeholder="Виски, Пиво..." required>
+            </div>
+            <div class="input-group">
+                <label>СЛАБОЕ МЕСТО</label>
+                <textarea id="weakness" rows="2" placeholder="Боюсь жены..."></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">ОТПРАВИТЬ В ШТАБ</button>
+        </form>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); 
+
+        // !!! ВСТАВЬ СЮДА ССЫЛКУ ИЗ N8N (WEBHOOK URL) !!!
+        const N8N_WEBHOOK_URL = 'https://martolog.app.n8n.cloud/webhook-test/dopros'; 
+
+        document.getElementById('doprosForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "⏳ ОТПРАВКА...";
+            btn.disabled = true;
+
+            const data = {
+                user_id: tg.initDataUnsafe.user?.id || 12345, // ID юзера
+                username: tg.initDataUnsafe.user?.username || 'anon',
+                full_name: document.getElementById('full_name').value,
+                role: document.getElementById('role').value,
+                alcohol: document.getElementById('alcohol').value,
+                weakness: document.getElementById('weakness').value
+            };
+
+            fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => {
+                tg.showAlert("Досье принято! Жди ответа в чате.");
+                tg.close();
+            })
+            .catch(err => {
+                tg.showAlert("Ошибка связи: " + err);
+                btn.innerText = "ПОПРОБОВАТЬ ЕЩЕ РАЗ";
+                btn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
